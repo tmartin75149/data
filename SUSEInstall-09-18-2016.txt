@@ -1,0 +1,307 @@
+shut9/18/2016
+Contents
+1	SUSE ENVIRONMENT	1
+1.1	DVD IMAGES AND URL’S FOR SUSE LINUX ENTERPRISE SERVER 11 SP4	1
+1.2	DEPLOYMENT UPGRADE CONSIDERATIONS – SNAPSHOTS AND BACKUPS IMAGES	2
+1.3	VM TOOL CONSIDERATIONS	2
+2	SUSE POST CONFIGURATION	2
+2.1	VM WORKSTATION OR VMPLAYER SETTING	2
+2.1.1	No Ethernet Connection (Depends on your environment)	2
+2.1.2	Mounting the DVD for DVD1.ISO Image	2
+2.1.3	Modifying Display Setting	2
+2.2	ADDING AN ACCOUNT (OPTIONAL) + SUDO ACCESS	3
+2.3	ADDING LOCATE COMMAND	3
+2.4	ENABLING SSH LOGIN	3
+2.5	SETTING UP PROXY USING YAST	3
+3	INSTALLATION PACKAGE DEPLOYMENT	3
+3.1	INSTALLING JAVA USING YAST	3
+3.2	INSTALL GIT	4
+3.2.1	Initial setup	4
+3.2.2	Initial setup	4
+3.3	INSTALLING JENKINS	5
+4	SUSE MAINTENANCE	5
+4.1	ZYPPER COMMANDS (ALIAS TO YUM FOR CENTOS)	5
+4.2	JAVA INSTALLATION DETAILS (REFERENCE)	6
+4.2.1	Identifying the links required for a fresh install of Java	6
+4.2.2	Installing a new version of Java from Oracle (TBR)	6
+4.3	LAUNCHING THE VM	7
+5	INSTALLING JENKINS IN SUSE	7
+
+
+1 SUSE Environment
+Lessons learned are often found out the hard way and the SUSE environment is no exception. The YAST tool appears to be the primary way to manage this environment and not the command line. Upgrading the environment can be tricky and not without introducing problems if you do not use YAST.  Here are some resources that are needed to be downloaded for an installation or system upgrade.
+1.1 DVD Images and URL’s for SUSE Linux Enterprise Server 11 SP4
+URL: https://www.suse.com/download-linux
+URL: https://download.suse.com/index.jsp
+URL: https://www.suse.com/documentation/
+
+
+1. SLES-11-SP4-DVD-x86_64-GM-DVD1.iso
+2. SLES-11-SP4-DVD-x86_64-GM-DVD2.iso
+3. SLE-11-SP4-SDK-DVD-x86_64-GM-DVD1.iso  (Has GIT)
+4. SLE-11-SP4-SDK-DVD-x86_64-GM-DVD2.iso
+1.2 Deployment Upgrade considerations – Snapshots and Backups images
+The IT group does daily backup of VM images so in the event there is a problem it can be restored using the vSphere tool. For a production environment this is fine however when doing development allowing snapshot of images is very important.  Development proceeds forward by events so if we upgrade GIT and screw it up, we can just revert back to the last instance and that may not map to the last daily backup. The problem with snapshots is they take up disk space and end up being left around and not being deleted. This becomes an issue for those concerned about the backup space needed for the production environment. The amount of spaced needed for our product is really minimal and just requires some discipline to make sure this does not become an issue to the production backup team. 
+1.3 VM Tool Considerations
+1. Virtual Box would not deploy a 64-bit SUSE installation. It worked well on the 32-bit version.
+2. Deployed VMWare Player at work and VM Workstation at home.  VMWare has better performance than Virtual Box. 
+3. If you plan to install VM Workstation with a trial period at home, then install the Revo uninstaller located at http://ninite.com. This open source uninstaller will remove any garbage left over in the registry and doing an uninstall. Windows uninstall does not remove extraneous files. 
+
+2 Suse Post Configuration
+2.1 VM Workstation or VMPlayer Setting
+2.1.1 No Ethernet Connection (Depends on your environment)
+I had to delete any existing DHCP configuration and then setup the hardware network connection
+1. Computer-->YaST-->Network Devices-->Network Settings
+2. Select Ethernet Network Card  DHCP  eth0  -->Delete
+3. Select 83545EM Gigabit Controller (Copper) Not Configured-->Edit  
+4. Select-->Dynamic Address Radio Button-->Select Version 4 only-->Next-->OK
+5. Open a terminal window
+# ip addr
+2.1.2 Mounting the DVD for DVD1.ISO Image
+1. VM-->Removable Devices-->CD/DVD(Sata)-->Setting-->Check the Use ISO Image File Radio Button
+2. Select Connection-->Use ISO Image File:-->Browse-->Select Image from Disk-->Open-->OK
+3. VM-->Removable Devices-->CD/DVD(Sata)-->Device Status-->Check Connected-->Check Connect at power on-->OK
+2.1.3 Modifying Display Setting
+1. VMWare Workstation Menu-->Edit-->Preferences-->Display
+2. Check Autofit-->Check Autofit window checkbox
+3. Check Autofit--> Check Autofit guest checkbox
+4. Full Screen-->Autofit Guest (Change guest resolution)-->OK
+
+2.2 Adding an account (optional) + sudo Access
+1. YaST-->Security and User-->User and Group Management-->Add
+2. User’s Full Name: John Smith
+3. Username: smithjo
+4. Password: smithjo
+5. Press-->OK-->Yes-->Ok
+6. Add sudo access
+Open a terminal window 
+# usermod –G wheel martinth (My Account)
+2.3 Adding locate command
+1. Computer-->YAST-->Software-->Software Management-->locate (Search window)-->Search-->Accept
+2. # updatedb
+2.4 Enabling SSH login
+1. Computer-->YaST-->Password-->Continue-->YaST Control  Center (as superuser)
+2. YaST Control Center-->Security and User -->Firewall-->Allowed Services-->Service To Allow-->Secure Shell Server-->Add-->Next-->Finish
+2.5 Setting Up Proxy using YAST
+1. Computer-->YaST-->Network Services-->Proxy
+
+2. Http Proxy URL
+http://hqproxyguest1.aafes.com:9090
+
+3. Https Proxy URL
+https://hqproxyguest1.aafes.com:9090
+
+4. FTP Proxy URL
+ftp://hqproxyguest1.aafes.com:9090
+3 Installation Package Deployment
+3.1 Installing Java using YAST
+Details for the Java environment are covered in the index. SUSE does not have a license agreement with Oracle and therefore install the IBM version of the JDK.  Oracle and IBM are two different companies and do implement differently.
+1. YaST-->Software-->Software Management-->Enter Java in search window-->Search
+2. Look for Package Java-1_7_1-ibm-->Check Box-->Accept
+3. Verify that Java is installed and display the version
+# java -version
+java version "1.7.0"
+Java(TM) SE Runtime Environment (build pxa6470_27sr3-20150415_01(SR3))
+IBM J9 VM (build 2.7, JRE 1.7.0 Linux amd64-64 Compressed References 20150407_243189 (JIT enabled, AOT enabled)
+J9VM - R27_Java727_SR3_20150407_1831_B243189
+JIT  - tr.r13.java_20150406_89182
+GC   - R27_Java727_SR3_20150407_1831_B243189_CMPRSS
+J9CL - 20150407_243189)
+JCL - 20150414_01 based on Oracle 7u79-b14
+
+
+
+3.2 Install GIT
+To Install GIT, the SDK needs to be added to the software repository along with the original DVD image.
+1. SLES-11-SP4-DVD-x86_64-GM-DVD1.iso
+2. SLE-11-SP4-SDK-DVD-x86_64-GM-DVD1.iso
+
+3.2.1 Updating Software Repository
+1. Set the ISO image file to the SDK 
+VM-->Removable Devices-->CD/DVD(Sata)-->Setting
+Connection-->Use ISO Image File:-->Browse-->Navigate to file-->open
+Device Status-->Check Connected
+Device Status-->Check Connect at power on-->OK-->Yes
+If the icon does show display on the desktop the try to disconnect/connect for
+VM-->Removable Devices-->CD/DVD(Sata)-->Disconnect/Connect 
+
+2. Add the SDK ISO image to the software repository
+Computer-->YAST-->Software-->Software Repositories-->Add-->DVD-->Next-->Continue-->Yes-->Next—OK
+
+3. Set the ISO image file to the DVD installation disk
+       VM-->Removable Devices-->CD/DVD(Sata)-->Disconnect
+VM-->Removable Devices-->CD/DVD(Sata)-->Setting
+Connection-->Use ISO Image File:-->Browse-->Navigate to file-->open
+Device Status-->Check Connected
+Device Status-->Check Connect at power on-->OK-->Yes
+
+3.2.2 Install GIT
+
+1. Computer-->YAST-->Software-->Software Management-->git in search window-->Search
+Check the git checkbox-->Accept-->Continue-->Continue
+
+
+
+
+3.2.3 Initial setup
+Computer-->YAST-->Software-->Add-On-Products-->Add--> DVD Radio Button-->Next-->Continue--> Yes Radio for License-->Next-->Search Tap at Top--> Enter git in search window-->Search--> Select git checkbox --> Accept--> Continue--> Continue
+
+YaST2 Window Pops up looking for the 1st Linux Enterprise DVD Image
+
+The GIT Repository is in the SDK disk
+Computer-->Software-->Add-on Products-->Add-->DVD Radio Button-->Next-->Continue-->Yes Radio for License-->Next
+Search Tab-->Enter git in search window-->Search-->Select git checkbox-->Accept-->Continue-->Continue
+
+1. SLES-11-SP4-DVD-x86_64-GM-DVD1.iso
+2. SLE-11-SP4-SDK-DVD-x86_64-GM-DVD1.iso
+3. VM-->Removable Devices-->CD/DVD(Sata)-->Setting-->Check the Use ISO Image File Radio Button
+4. Select Connection--> SLE-11-SP4-SDK-DVD-x86_64-GM-DVD1.iso-->Browse-->Select Image from Disk-->Open-->OK
+5. VM-->Removable Devices-->CD/DVD(Sata)-->Device Status-->Check Connected-->Check Connect at power on-->OK
+6. Computer-->YAST-->Software Management-->
+
+
+
+3.3 Installing Jenkins
+
+1. Adding the Jenkins respository
+$ sudo zypper addrepo –f 
+http://pkg.jenkins-ci.org/opensuse jenkins
+
+linux-vnvw:/etc/zypp # zypper addrepo http://pkg.jenkins-ci.org/opensuse jenkinsAdding repository 'jenkins' [done]
+Repository 'jenkins' successfully added
+Enabled: Yes
+Autorefresh: No
+GPG check: Yes
+URI: http://pkg.jenkins-ci.org/opensuse
+
+2. $ sudo zypper install jenkins
+Keep answering no and will later allow you to install Jenkins.
+
+3. Shutdown and reboot
+# shutdown -r now
+
+
+4 SUSE Maintenance
+4.1 zypper Commands (alias to yum for CentOS)
+1. Install the locate (mlocate in CentOS)command
+YaST-->Software-->Software Management
+
+http://www.tecmint.com/zypper-commands-to-manage-suse-linux-package-management/
+2. # zypper help install(in)
+# zypper search(se) gnone-desktop
+# zypper info –t pattern lamp_server
+# zypper shell 
+# zypper repos or zyper lr (Listing Defined Repositories
+# zypper lr –u (List zypper URI on the table)
+# zypper lr –p (List zypper URI on the table)
+# zypper lr –u (List repository priority and list by priority)
+# zypper refresh (Refreshing Repositories)
+# zypper refresh repo-non-oss (To refresh a specific repository say ‘repo-non-oss‘)
+# zypper ref -f repo-non-oss (To force update a repository say ‘repo-non-oss‘)
+
+        # zypper lr (Returns number of respository) zypper mr -d 6
+        zypper mr -d 6 (disable)
+        zypper mr -e 6 (enable)
+        
+4.2 Java Installation Details (Reference)
+4.2.1 Identifying the links required for a fresh install of Java
+1. # which java
+/usr/bin/java
+
+2. linux-vnvw:~ # cd /usr/bin
+linux-vnvw:/usr/bin # ls -lrt java
+lrwxrwxrwx 1 root root 22 Sep 16 04:37 java -> /etc/alternatives/java
+
+3. linux-vnvw:/etc/alternatives # ls -lrt java
+lrwxrwxrwx 1 root root 37 Sep 16 04:37 java -> /usr/lib64/jvm/jre-1.7.1-ibm/bin/java
+
+
+linux-vnvw:/usr/lib64/jvm # ls
+java-1.7.1-ibm  java-1.7.1-ibm-1.7.1  jre  jre-1.7.1  jre-1.7.1-ibm  jre-ibm
+linux-vnvw:/usr/lib64/jvm # ls -lrt
+total 4
+
+drwxr-xr-x 3 root root 4096 Sep 16 04:37 java-1.7.1-ibm-1.7.1
+lrwxrwxrwx 1 root root   20 Sep 16 04:37 java-1.7.1-ibm -> java-1.7.1-ibm-1.7.1
+lrwxrwxrwx 1 root root   24 Sep 16 04:37 jre-1.7.1-ibm -> java-1.7.1-ibm-1.7.1/jre
+lrwxrwxrwx 1 root root   25 Sep 16 04:37 jre-ibm -> /etc/alternatives/jre_ibm
+lrwxrwxrwx 1 root root   27 Sep 16 04:37 jre-1.7.1 -> /etc/alternatives/jre_1.7.1
+lrwxrwxrwx 1 root root   21 Sep 16 04:37 jre -> /etc/alternatives/jre
+
+4. # ls –lrt /etc/alternatives
+lrwxrwxrwx 1 root root 27 Sep 15 11:39 libblas.so.3 -> /usr/lib64/libblas.so.3.4.2
+lrwxrwxrwx 1 root root 29 Sep 15 11:39 liblapack.so.3 -> /usr/lib64/liblapack.so.3.4.2
+lrwxrwxrwx 1 root root 15 Sep 15 11:40 ld -> /usr/bin/ld.bfd
+lrwxrwxrwx 1 root root 15 Sep 15 11:40 vim -> /bin/vim-normal
+lrwxrwxrwx 1 root root 29 Sep 15 11:40 ftp.1 -> /usr/share/man/man1/pftp.1.gz
+lrwxrwxrwx 1 root root 13 Sep 15 11:40 ftp -> /usr/bin/pftp
+lrwxrwxrwx 1 root root 36 Sep 15 11:43 xulrunner -> /usr/lib64/xulrunner-1.9.2/xulrunner
+lrwxrwxrwx 1 root root 42 Sep 16 04:37 tnameserv -> /usr/lib64/jvm/jre-1.7.1-ibm/bin/tnameserv
+lrwxrwxrwx 1 root root 44 Sep 16 04:37 rmiregistry -> /usr/lib64/jvm/jre-1.7.1-ibm/bin/rmiregistry
+lrwxrwxrwx 1 root root 37 Sep 16 04:37 rmid -> /usr/lib64/jvm/jre-1.7.1-ibm/bin/rmid
+lrwxrwxrwx 1 root root 43 Sep 16 04:37 policytool -> /usr/lib64/jvm/jre-1.7.1-ibm/bin/policytool
+lrwxrwxrwx 1 root root 40 Sep 16 04:37 keytool -> /usr/lib64/jvm/jre-1.7.1-ibm/bin/keytool
+lrwxrwxrwx 1 root root 36 Sep 16 04:37 jre_ibm_exports -> /usr/lib64/jvm-exports/jre-1.7.1-ibm
+lrwxrwxrwx 1 root root 28 Sep 16 04:37 jre_ibm -> /usr/lib64/jvm/jre-1.7.1-ibm
+lrwxrwxrwx 1 root root 36 Sep 16 04:37 jre_exports -> /usr/lib64/jvm-exports/jre-1.7.1-ibm
+lrwxrwxrwx 1 root root 36 Sep 16 04:37 jre_1.7.1_exports -> /usr/lib64/jvm-exports/jre-1.7.1-ibm
+lrwxrwxrwx 1 root root 28 Sep 16 04:37 jre_1.7.1 -> /usr/lib64/jvm/jre-1.7.1-ibm
+lrwxrwxrwx 1 root root 28 Sep 16 04:37 jre -> /usr/lib64/jvm/jre-1.7.1-ibm
+lrwxrwxrwx 1 root root 41 Sep 16 04:37 jextract -> /usr/lib64/jvm/jre-1.7.1-ibm/bin/jextract
+lrwxrwxrwx 1 root root 38 Sep 16 04:37 jexec -> /usr/lib64/jvm/jre-1.7.1-ibm/lib/jexec
+lrwxrwxrwx 1 root root 70 Sep 16 04:37 jce_1.7.1_ibm_us_export_policy -> /usr/lib64/jvm-private/java-1.7.1-ibm/jce/vanilla/US_export_policy.jar
+lrwxrwxrwx 1 root root 66 Sep 16 04:37 jce_1.7.1_ibm_local_policy -> /usr/lib64/jvm-private/java-1.7.1-ibm/jce/vanilla/local_policy.jar
+lrwxrwxrwx 1 root root 37 Sep 16 04:37 java -> /usr/lib64/jvm/jre-1.7.1-ibm/bin/java
+4.2.2 Installing a new version of Java from Oracle (TBR)
+
+http://www.oracle.com/technetwork/java/javase/downloads/jdk-8u101-linux-x64.html
+
+1. Check the version of the OS
+# uname –m
+X86_64roo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4.3 Launching the VM
+1. $ sudo vmplayer
+Repository  /home/martinth/vmware
+Its best to tar the directory before making changes,  That way you can
+Then delete the current and untar the last to start over again
+
+
+
+
+5 Installing Jenkins in SUSE
+
+
+4. Adding the Jenkins respository
+$ sudo zypper addrepo –f 
+http://pkg.jenkins-ci.org/opensuse jenkins
+
+linux-vnvw:/etc/zypp # zypper addrepo http://pkg.jenkins-ci.org/opensuse jenkinsAdding repository 'jenkins' [done]
+Repository 'jenkins' successfully added
+Enabled: Yes
+Autorefresh: No
+GPG check: Yes
+URI: http://pkg.jenkins-ci.org/opensuse
+
+5. $ sudo zypper install jenkins
+
+
+
+
+
+
